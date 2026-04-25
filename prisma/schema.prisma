@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships JourneyMember[]
+  diaries     MemoryDiary[]
+}
+
+model Journey {
+  id         String    @id @default(uuid())
+  name       String
+  startDate  DateTime?
+  coverUrl   String?
+  inviteCode String    @unique
+  status     String    @default("PENDING")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  members  JourneyMember[]
+  memories Memory[]
+}
+
+model JourneyMember {
+  id        String   @id @default(uuid())
+  journeyId String
+  userId    String
+  role      String
+  createdAt DateTime @default(now())
+
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([journeyId, userId])
+}
+
+model Memory {
+  id        String   @id @default(uuid())
+  journeyId String
+  title     String
+  dateAt    DateTime
+  caption   String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  images  MemoryImage[]
+  diaries MemoryDiary[]
+  tags    MemoryTag[]
+}
+
+model MemoryImage {
+  id       String @id @default(uuid())
+  memoryId String
+  url      String
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
+
+model MemoryDiary {
+  id        String   @id @default(uuid())
+  memoryId  String
+  userId    String
+  content   String
+  mood      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, userId])
+}
+
+model MemoryTag {
+  id       String @id @default(uuid())
+  memoryId String
+  name     String
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
